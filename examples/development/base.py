@@ -137,7 +137,7 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm, env_params)
     )
 
     variant_spec = {
-        'git_sha': get_git_rev(),
+        #'git_sha': get_git_rev(),
 
         'environment_params': {
             'training': {

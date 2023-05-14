@@ -271,14 +271,12 @@ class BNN:
         
     def _set_state(self):
         keys = ['weights', 'biases']
-        # ops = []
+        ops = []
         num_layers = len(self.layers)
         for layer in range(num_layers):
-            # net_state = self._state[i]
             params = {key: np.stack([self._state[net][layer][key] for net in range(self.num_nets)]) for key in keys}
-           # ops.extend(self.layers[layer].set_model_vars(params))
-        #self.sess.run(ops)
-            self.layers[layer].set_model_vars(params, self.sess)
+           ops.extend(self.layers[layer].set_model_vars(params))
+        self.sess.run(ops)
     
     # 通过转存，到self.backoff_layers中
     def _save_backoff_state(self, idx):
@@ -291,14 +289,12 @@ class BNN:
 
     def _set_backoff_state(self):
         keys = ['weights', 'biases']
-        # ops = []
+        ops = []
         num_layers = len(self.backoff_layers)
         for layer in range(num_layers):
-            # net_state = self._state[i]
             params = {key: np.stack([self._state[net][layer][key] for net in range(self.num_nets)]) for key in keys}
-            #ops.extend(self.backoff_layers[layer].set_model_vars(params))
-        #self.sess.run(ops)
-            self.backoff_layers[layer].set_model_vars(params, self.sess)
+            ops.extend(self.backoff_layers[layer].set_model_vars(params))
+        self.sess.run(ops)
 
     # holdout_losses 暂时理解第一个维度是num_networkes，把第n个ensemble的模型存起来
     # 不再增长了就溜了
