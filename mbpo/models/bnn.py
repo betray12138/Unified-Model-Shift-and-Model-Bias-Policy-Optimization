@@ -275,7 +275,7 @@ class BNN:
         num_layers = len(self.layers)
         for layer in range(num_layers):
             params = {key: np.stack([self._state[net][layer][key] for net in range(self.num_nets)]) for key in keys}
-           ops.extend(self.layers[layer].set_model_vars(params))
+            ops.extend(self.layers[layer].set_model_vars(params))
         self.sess.run(ops)
     
     # 通过转存，到self.backoff_layers中
