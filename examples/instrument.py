@@ -268,7 +268,7 @@ def run_example_cluster(example_module_name, example_argv):
         trainable_class, variant_spec, example_args)
     experiments = {experiment_id: experiment}
 
-    redis_address = "127.0.0.1:6379"    #此处使用本地环回
+    redis_address = "127.0.0.1:6379"   
 
     #redis_address = ray.services.get_node_ip_address() + ':6379'
 

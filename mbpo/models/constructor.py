@@ -4,7 +4,6 @@ import tensorflow as tf
 from mbpo.models.fc import FC
 from mbpo.models.bnn import BNN
 
-# 参数在此 obs_dim，act_dim
 def construct_model(obs_dim=11, act_dim=3, rew_dim=1, hidden_dim=200, num_networks=7, num_elites=5, session=None):
 	print('[ BNN ] Observation dim {} | Action dim: {} | Hidden dim: {}'.format(obs_dim, act_dim, hidden_dim))
 	params = {'name': 'BNN', 'num_networks': num_networks, 'num_elites': num_elites, 'sess': session}
@@ -16,7 +15,7 @@ def construct_model(obs_dim=11, act_dim=3, rew_dim=1, hidden_dim=200, num_networ
 	model.add(FC(hidden_dim, activation="swish", weight_decay=0.000075))
 	model.add(FC(hidden_dim, activation="swish", weight_decay=0.000075))
 	model.add(FC(obs_dim+rew_dim, weight_decay=0.0001))
-	#CHECK-COMPARE: 对照组学习率调整为1e-4
+	#CHECK-COMPARE
 	model.finalize(tf.train.AdamOptimizer, {"learning_rate": 0.001})
 	return model
 

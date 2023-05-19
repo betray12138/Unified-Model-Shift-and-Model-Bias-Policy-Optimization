@@ -389,7 +389,7 @@ class MBPO(RLAlgorithm):
     def _union_train_model(self, **kwargs):
         env_samples = self._pool.return_all_samples()
         train_inputs, train_outputs = format_samples_for_training(env_samples)
-        # TODO: 参数完全没有修改
+        
         model_metrics = self._model.union_train(train_inputs, train_outputs, self._model_pool, self.fake_env, self.backoff_env, **kwargs)
         return model_metrics
     
@@ -445,7 +445,7 @@ class MBPO(RLAlgorithm):
         env_batch = self._pool.random_batch(env_batch_size)
 
         if model_batch_size > 0:
-            # TODO: model 采样 模仿这个
+            
             model_batch = self._model_pool.random_batch(model_batch_size)
 
             keys = env_batch.keys()

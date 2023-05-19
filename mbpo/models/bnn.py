@@ -42,7 +42,6 @@ class BNN:
                 .sess (tf.Session/None): The session that this model will use.
                     If None, creates a session with its own associated graph. Defaults to None.
         """
-        # TODO: 这不应该这么写啊
         
         self.union_model_batch_size = 1024
         self.union_training_times = 15
@@ -161,8 +160,7 @@ class BNN:
 
         optimizer_args = {} if optimizer_args is None else optimizer_args
         self.optimizer = optimizer(**optimizer_args)
-        # TODO:变成超参数
-        # TODO: HYPER
+        # TODO: HYPER-PARAMETER
         correc_optimizer_args = {"learning_rate": 1e-4}
         self.correc_optimizer = optimizer(**correc_optimizer_args)
         
@@ -214,7 +212,6 @@ class BNN:
             self.train_op = self.optimizer.minimize(train_loss, var_list=self.backoff_optvars)
 
         with tf.variable_scope(self.name,reuse=True):
-            # TODO: 超参数
             self.correc_optimizer = optimizer(**correc_optimizer_args)
 
             self.union_train_obs = tf.placeholder(dtype=tf.float32,
@@ -237,7 +234,6 @@ class BNN:
             self.sy_pred_in2d = tf.placeholder(dtype=tf.float32,
                                                shape=[None, self.layers[0].get_input_dim()],
                                                name="2D_training_inputs")
-            # TODO: 网络的直接输出
             self.sy_pred_mean2d_fac, self.sy_pred_var2d_fac = \
                 self.create_prediction_tensors(self.sy_pred_in2d, factored=True)
             self.sy_pred_mean2d = tf.reduce_mean(self.sy_pred_mean2d_fac, axis=0)
@@ -271,14 +267,15 @@ class BNN:
         
     def _set_state(self):
         keys = ['weights', 'biases']
-        ops = []
+        # ops = []
         num_layers = len(self.layers)
         for layer in range(num_layers):
+            # net_state = self._state[i]
             params = {key: np.stack([self._state[net][layer][key] for net in range(self.num_nets)]) for key in keys}
-            ops.extend(self.layers[layer].set_model_vars(params))
-        self.sess.run(ops)
+           # ops.extend(self.layers[layer].set_model_vars(params))
+        #self.sess.run(ops)
+            self.layers[layer].set_model_vars(params, self.sess)
     
-    # 通过转存，到self.backoff_layers中
     def _save_backoff_state(self, idx):
         self._backoff_state[idx] = [layer.get_model_vars(idx, self.sess) for layer in self.layers]
 
@@ -289,15 +286,16 @@ class BNN:
 
     def _set_backoff_state(self):
         keys = ['weights', 'biases']
-        ops = []
+        # ops = []
         num_layers = len(self.backoff_layers)
         for layer in range(num_layers):
+            # net_state = self._state[i]
             params = {key: np.stack([self._state[net][layer][key] for net in range(self.num_nets)]) for key in keys}
-            ops.extend(self.backoff_layers[layer].set_model_vars(params))
-        self.sess.run(ops)
+            #ops.extend(self.backoff_layers[layer].set_model_vars(params))
+        #self.sess.run(ops)
+            self.backoff_layers[layer].set_model_vars(params, self.sess)
 
-    # holdout_losses 暂时理解第一个维度是num_networkes，把第n个ensemble的模型存起来
-    # 不再增长了就溜了
+
     def _save_best(self, epoch, holdout_losses):
         updated = False
         for i in range(len(holdout_losses)):
@@ -362,7 +360,7 @@ class BNN:
         self._model_inds = sorted_inds[:self.num_elites].tolist()
         print('Using {} / {} models: {}'.format(self.num_elites, self.num_nets, self._model_inds))
 
-    # CHECK: 不能只训精英，所有的都要，在env里面要调用的
+
     def correc_random_inds(self, batch_size):
         inds = np.random.choice(self.num_nets, size=batch_size)
         return inds
@@ -392,13 +390,13 @@ class BNN:
     # Model Methods #
     #################
     def draw_union_metric(self, drawn_init_M1_inputs, drawn_init_M2_obs, drawn_init_M2_act):
-        # CHECK: 真正的input只能取到状态维度
+
         M1_obs = drawn_init_M1_inputs['observations']
         M1_act = drawn_init_M1_inputs['actions']
         M2_obs = drawn_init_M2_obs
         M2_act = drawn_init_M2_act
         
-        # 调用计算图将两个input输入 并计算差值
+
         _, M1_b, _ = self.sess.run(
             self.union_loss_op,
             feed_dict={
@@ -415,7 +413,6 @@ class BNN:
         )
         
         
-        # 返回差值的计算结果
         return M1_b - M2_b
         
     
@@ -485,14 +482,11 @@ class BNN:
         t0 = time.time()
         grad_updates = 0
         
-        # CHECK: 在第一次更新以前 备份  set用于设置backoff_layer
         self._save_all_state()
         self._set_backoff_state()
         
         for epoch in epoch_iter:
             
-            # 正向传播，grad_updates记录了batch_num次
-            # train用的是compile_loss，progress是用的mseloss
 
             for batch_num in range(int(np.ceil(idxs.shape[-1] / batch_size))):
                 batch_idxs = idxs[:, batch_num * batch_size:(batch_num + 1) * batch_size]
@@ -563,7 +557,6 @@ class BNN:
 
         if timer: timer.stamp('bnn_holdout')
 
-        # 清空inx的
         self._end_train(holdout_losses)
         if timer: timer.stamp('bnn_end')
 
@@ -582,11 +575,9 @@ class BNN:
         sum_times = 0
         
         
-        # CHECK-MBPO: 此处的注释即修改版MBPO
+        # CHECK-MBPO
         self._union_save_best(-1, holdout_union_loss)
         for epoch in union_epoch_iter:
-            # 此处先决条件为：model buff初始值就已经很大了
-            # self.union_model_batch_size = min(model_pool.size, union_loss_batch_size)
             model_batch = model_pool.random_batch(self.union_model_batch_size)
             obs = model_batch['observations']
             act = model_batch['actions']
@@ -686,8 +677,6 @@ class BNN:
         t0 = time.time()
         grad_updates = 0
         for epoch in epoch_iter:
-            # 正向传播，grad_updates记录了batch_num次
-            # train用的是compile_loss，progress是用的mseloss
 
             for batch_num in range(int(np.ceil(idxs.shape[-1] / batch_size))):
                 batch_idxs = idxs[:, batch_num * batch_size:(batch_num + 1) * batch_size]
@@ -821,17 +810,14 @@ class BNN:
         def create_forward(inputs, obs_ph):
 
             
-            # TODO: 此处可以直接算出b 和 a，用不同的self.model即可，这一个step就可以是完整的计算图
             ensemble_model_means, ensemble_model_vars = self.backoff_create_prediction_tensors(inputs, factored=True)
 
             ensemble_model_stds = tf.sqrt(ensemble_model_vars)
             
             batch_size = self.union_model_batch_size
-            # batch_size = int(ensemble_model_means.shape[1])
 
             ensemble_model_means = tf.concat([ensemble_model_means[:,:,0:1], ensemble_model_means[:,:,1:] + obs_ph[None]], axis=-1)
-            # ensemble_samples = ensemble_model_means + tf.random.normal(tf.shape(ensemble_model_means)) * ensemble_model_stds
-            # ensemble_samples = ensemble_model_means
+
             batch_inds = np.arange(0, batch_size).reshape((batch_size, 1))
             model_inds = self.correc_random_inds(batch_size).reshape((batch_size, 1))
             
@@ -840,41 +826,13 @@ class BNN:
             model_means = tf.gather_nd(ensemble_model_means,idx)
             model_stds = tf.gather_nd(ensemble_model_stds,idx)
             
-            # model_all_idx = np.tile(np.arange(self.num_nets), batch_size).reshape((self.num_nets*batch_size, 1))
-            # batch_all_idx = np.repeat(batch_inds, self.num_nets).reshape((self.num_nets*batch_size, 1))
-            
-            # all_idx = np.hstack((model_all_idx, batch_all_idx))
-            
-            # idx_flat = np.ravel_multi_index(idx.T, all_idx.max(axis=0) + 1)
-            # all_idx_flat = np.ravel_multi_index(all_idx.T, all_idx.max(axis=0) + 1)
-            # not_in_idx_flat = np.setdiff1d(all_idx_flat, idx_flat)
-            # not_in_idx = np.column_stack(np.unravel_index(not_in_idx_flat, all_idx.max(axis=0) + 1))
-            
-            # other_idx = not_in_idx[np.lexsort((not_in_idx[:, 0], not_in_idx[:, 1]))]
-            
-            # other_means = tf.reshape(tf.gather_nd(ensemble_model_means, other_idx), [self.num_nets - 1, batch_size, -1])
-            # other_stds = tf.reshape(tf.gather_nd(ensemble_model_stds, other_idx), [self.num_nets - 1, batch_size, -1])
-            
-            # print(ensemble_model_means.shape)
-            # print(model_means.shape)
-            
-            # mask = tf.reduce_any(tf.equal(tf.range(tf.shape(ensemble_model_means)[0])[:, tf.newaxis, tf.newaxis], idx), axis=2)
 
-            # other_means = tf.boolean_mask(ensemble_model_means, tf.logical_not(mask))
-            # other_stds = tf.boolean_mask(ensemble_model_stds, tf.logical_not(mask))
-
-
-            # return model_means, model_stds, other_means, other_stds, batch_size
             return model_means, model_stds, ensemble_model_means, ensemble_model_stds, batch_size
         
         model_means, model_stds, ensemble_means, ensemble_model_stds, batch_size = create_forward(inputs, obs_ph)
         
         uncertainty = tf.reduce_sum(self.compute_EMD(model_means, model_stds, ensemble_means, ensemble_model_stds)) / batch_size / (self.num_nets - 1)
 
-        # p_theta = tf.distributions.Normal(model_means, model_stds)
-        # p_other_theta = tf.distributions.Normal(ensemble_means, ensemble_model_stds)
-        # uncertainty = (tf.reduce_sum(tf.distributions.kl_divergence(p_theta, p_other_theta)) / batch_size / (self.num_nets - 1) + \
-        #     tf.reduce_sum(tf.distributions.kl_divergence(p_other_theta, p_theta)) / batch_size / (self.num_nets - 1)) / 2
 
         return uncertainty, model_means, model_stds, ensemble_means, ensemble_model_stds
     
@@ -884,16 +842,13 @@ class BNN:
         
         def create_forward(inputs, obs_ph):
             
-            # TODO: 此处可以直接算出b 和 a，用不同的self.model即可，这一个step就可以是完整的计算图
             ensemble_model_means, ensemble_model_vars = self.create_prediction_tensors(inputs, factored=True)
                 
             ensemble_model_stds = tf.sqrt(ensemble_model_vars)
             
             batch_size = self.union_model_batch_size
-            # batch_size = int(ensemble_model_means.shape[1])
-            # batch_size = int(batch_size)
+
             ensemble_model_means = tf.concat([ensemble_model_means[:,:,0:1], ensemble_model_means[:,:,1:] + obs_ph[None]], axis=-1)
-            # ensemble_samples = ensemble_model_means + tf.random.normal(tf.shape(ensemble_model_means)) * ensemble_model_stds
             ensemble_samples = ensemble_model_means
 
             batch_inds = np.arange(0, batch_size).reshape((batch_size, 1))
@@ -911,10 +866,6 @@ class BNN:
         
         uncertainty = tf.reduce_sum(self.compute_EMD(model_means, model_stds, ensemble_model_means, ensemble_model_stds)) / batch_size / (self.num_nets - 1)
 
-        # p_theta = tf.distributions.Normal(model_means, model_stds)
-        # p_other_theta = tf.distributions.Normal(ensemble_means, ensemble_model_stds)
-        # uncertainty = (tf.reduce_sum(tf.distributions.kl_divergence(p_theta, p_other_theta)) / batch_size / (self.num_nets - 1) + \
-        #     tf.reduce_sum(tf.distributions.kl_divergence(p_other_theta, p_theta)) / batch_size / (self.num_nets - 1)) / 2
         return uncertainty, model_means, model_stds
     
     def backoff_create_prediction_tensors(self, inputs, factored=False, *args, **kwargs):
@@ -928,7 +879,6 @@ class BNN:
             return mean, variance
         return factored_mean, factored_variance
     
-    # TODO: predict的前向传播
     def create_prediction_tensors(self, inputs, factored=False, *args, **kwargs):
         """See predict() above for documentation.
         """
@@ -1058,16 +1008,12 @@ class BNN:
     def union_loss(self, union_train_obs, union_train_act):
         
         c_uncer,m1_model_means,m1_model_stds, m1_ensemble_model_means, m1_ensemble_model_stds = self.backoff_union_step(union_train_obs, union_train_act)
-        # CHECK：此处fake_union_step传入的ensemble_model_means 和 ensemble_model_stds应该是6个维度 而不是7个维度
+
         b_uncer,m2_model_means,m2_model_stds = self.fake_union_step(union_train_obs, union_train_act, m1_ensemble_model_means, m1_ensemble_model_stds)
         def multivar_continue_TV_divergence(m1_model_means,m1_model_stds,m2_model_means,m2_model_stds):
             
             uncertainty = tf.reduce_sum(self.compute_EMD(m1_model_means, m1_model_stds, m2_model_means, m2_model_stds)) / self.union_model_batch_size
             
-            # m1_theta = tf.distributions.Normal(m1_model_means,m1_model_stds)
-            # m2_theta = tf.distributions.Normal(m2_model_means,m2_model_stds)
-            # uncertainty = (tf.reduce_sum(tf.distributions.kl_divergence(m1_theta, m2_theta)) / self.union_model_batch_size + \
-            #             tf.reduce_sum(tf.distributions.kl_divergence(m2_theta, m1_theta)) / self.union_model_batch_size) / 2
             return uncertainty
         a_uncer = multivar_continue_TV_divergence(m1_model_means,m1_model_stds,m2_model_means,m2_model_stds)
         return a_uncer, b_uncer, c_uncer

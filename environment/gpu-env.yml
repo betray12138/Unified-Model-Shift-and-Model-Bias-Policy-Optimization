@@ -1,4 +1,4 @@
-name: mbpo
+name: usb
 channels:
   - defaults
 dependencies:
@@ -96,7 +96,6 @@ dependencies:
     - more-itertools==4.3.0
     - mujoco-py==2.1.2.14
     - multipledispatch==0.6.0
-    - multiworld==0.0.0
     - networkx==2.2
     - numpy==1.15.4
     - nvidia-ml-py==11.525.112
@@ -151,3 +150,4 @@ dependencies:
     - wcwidth==0.2.6
     - werkzeug==0.15.3
     - zipp==3.6.0
+    - -r requirements.txt
