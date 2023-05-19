@@ -223,8 +223,7 @@ class BNN:
             self.union_loss_op = self.union_loss(self.union_train_obs, self.union_train_act)
             self.a_uncer, self.b_uncer, self.c_uncer = self.union_loss(self.union_train_obs, self.union_train_act)
             # CHECK-MODEL BIAS OR MODEL SHIFT   a_uncer——model shift b_uncer——model bias
-            self.union_train_loss = self.b_uncer
-            # self.union_train_loss = self.a_uncer + self.b_uncer
+            self.union_train_loss = self.a_uncer + self.b_uncer
             self.union_train_op = self.correc_optimizer.minimize(self.union_train_loss, var_list=self.optvars)
         # Initialize all variables
         self.sess.run(tf.variables_initializer(self.optvars + self.nonoptvars + self.optimizer.variables() + self.correc_optimizer.variables()))
