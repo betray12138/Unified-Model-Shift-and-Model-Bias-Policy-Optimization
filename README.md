@@ -5,9 +5,6 @@ Model Bias Policy Optimization].
 
 
 ## Installation
-1. Install [MuJoCo 1.50](https://www.roboti.us/index.html) at `~/.mujoco/mjpro150` and copy your license key to `~/.mujoco/mjkey.txt`
-
-2. Create a conda environment and install usb
 ```
 cd Unified-Model-Shift-and-Model-Bias-Policy-Optimization
 conda env create -f environment/gpu-env.yml
