@@ -1,15 +1,17 @@
 # Unified Model Shift and Model Bias Policy Optimization
 
 Code to reproduce the experiments in [How to Fine-tune the Model: Unified Model Shift and
-Model Bias Policy Optimization] (NeuralIPS 2023).
+Model Bias Policy Optimization] (NeurIPS 2023).
 
 If you choose to use this repo, please cite:
 
-@article{zhang2023fine,
-  title={How to Fine-tune the Model: Unified Model Shift and Model Bias Policy Optimization},
-  author={Zhang, Hai and Yu, Hang and Zhao, Junqiao and Zhang, Di and Zhou, Hongtu and Zhang, Xiao and Ye, Chen and others},
-  journal={arXiv preprint arXiv:2309.12671},
-  year={2023}
+@inproceedings{
+zhang2023how,
+title={How to Fine-tune the Model: Unified Model Shift and Model Bias Policy Optimization},
+author={Hai Zhang and Hang Yu and Junqiao Zhao and Di Zhang and Chang Huang and Hongtu Zhou and Xiao Zhang and Chen Ye},
+booktitle={Thirty-seventh Conference on Neural Information Processing Systems},
+year={2023},
+url={https://openreview.net/forum?id=d7a5TpePV7}
 }
 
 
